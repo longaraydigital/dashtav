@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────
+   TOKENS — DARK FINTECH (default)
+   #0B0F1A → background principal
+   #111827 → cards
+   #1F2937 → elementos secundários
+   ───────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Superfícies */
+    --background: 222 47% 8%;          /* #0B0F1A */
+    --foreground: 210 40% 96%;
+
+    --card: 222 47% 11%;               /* #111827 */
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 96%;
+
+    /* Primária — Blue #3B82F6 */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 8%;
+
+    /* Secundária — #1F2937 */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 96%;
+
+    /* Muted */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 55%;
+
+    /* Accent — purple #8B5CF6 */
+    --accent: 262 83% 66%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive — Red #EF4444 */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Bordas e inputs */
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    /* ── Sidebar */
+    --sidebar-bg: 222 47% 6%;
+    --sidebar-fg: 215 20% 55%;
+    --sidebar-fg-active: 210 40% 96%;
+    --sidebar-accent-bg: 217 91% 60%;  /* glow azul no hover */
+    --sidebar-border: 217 33% 14%;
+    --sidebar-width: 240px;
+
+    /* ── Performance status */
+    --perf-green: 142 71% 45%;         /* #22C55E */
+    --perf-green-bg: 142 71% 10%;
+    --perf-green-border: 142 71% 20%;
+
+    --perf-yellow: 38 92% 50%;         /* #F59E0B */
+    --perf-yellow-bg: 38 92% 10%;
+    --perf-yellow-border: 38 92% 25%;
+
+    --perf-red: 0 84% 60%;             /* #EF4444 */
+    --perf-red-bg: 0 84% 10%;
+    --perf-red-border: 0 84% 25%;
+
+    /* ── Chart colors */
+    --chart-1: 217 91% 60%;   /* blue   — custo */
+    --chart-2: 142 71% 45%;   /* green  — receita/lucro */
+    --chart-3: 38 92% 50%;    /* yellow — atenção */
+    --chart-4: 0 84% 60%;     /* red    — crítico */
+    --chart-5: 262 83% 66%;   /* purple — extra */
+
+    /* ── Glow effects */
+    --glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+    --glow-green: 0 0 20px rgba(34, 197, 94, 0.3);
+    --glow-red: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+}
+
+/* ─────────────────────────────────────────
+   BASE STYLES
+   ───────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Números tabulares — essencial para dashboards */
+  table,
+  .font-mono,
+  [data-metric] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ─────────────────────────────────────────
+   UTILITÁRIOS DO DESIGN SYSTEM
+   ───────────────────────────────────────── */
+@layer utilities {
+  /* ── Performance badges */
+  .status-green {
+    background: hsl(var(--perf-green-bg));
+    color: hsl(var(--perf-green));
+    border: 1px solid hsl(var(--perf-green-border));
+  }
+  .status-yellow {
+    background: hsl(var(--perf-yellow-bg));
+    color: hsl(var(--perf-yellow));
+    border: 1px solid hsl(var(--perf-yellow-border));
+  }
+  .status-red {
+    background: hsl(var(--perf-red-bg));
+    color: hsl(var(--perf-red));
+    border: 1px solid hsl(var(--perf-red-border));
+  }
+  .status-nodata {
+    @apply bg-muted text-muted-foreground border border-border;
+  }
+
+  /* ── Glow effects */
+  .glow-blue {
+    box-shadow: var(--glow-blue);
+  }
+  .glow-green {
+    box-shadow: var(--glow-green);
+  }
+  .glow-red {
+    box-shadow: var(--glow-red);
+  }
+
+  /* ── Card base */
+  .dash-card {
+    @apply rounded-lg border border-border bg-card p-5 transition-all duration-200;
+  }
+  .dash-card:hover {
+    @apply border-primary/30;
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15),
+                0 4px 20px hsl(var(--primary) / 0.08);
+  }
+
+  /* ── Scrollbar discreta */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 2px;
+  }
+
+  /* ── Gradient text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent;
+  }
+
+  /* ── Table row hover */
+  .table-row-hover {
+    @apply transition-colors duration-150 hover:bg-secondary/50 cursor-pointer;
+  }
+}
+
+/* ─────────────────────────────────────────
+   ANIMAÇÕES
+   ───────────────────────────────────────── */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+  }
+  .animate-pulse-subtle {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}

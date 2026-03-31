@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum Platform {
+  META
+  GOOGLE
+}
+
+enum ObjectiveType {
+  SALES
+  LEADS
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+  DRAFT
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  PENDING
+  ERROR
+  DISABLED
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  ERROR
+}
+
+enum UserRole {
+  ADMIN
+  VIEWER
+}
+
+// ─────────────────────────────────────────
+// USUÁRIOS
+// ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String   // Hashed
+  role      UserRole @default(VIEWER)
+  image     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// PRODUTOS E ECONOMICS
+// ─────────────────────────────────────────
+
+/// Parâmetros econômicos do produto.
+/// break_even_cpa e ideal_cpa são calculados e persistidos
+/// para evitar recálculo a cada query.
+model ProductEconomics {
+  id                   String         @id @default(cuid())
+  productName          String         @map("product_name")
+  ticket               Decimal        @db.Decimal(12, 2)
+  /// Ex: 0.40 = 40% de margem
+  marginPercent        Decimal        @map("margin_percent") @db.Decimal(5, 4)
+  /// Ex: 0.20 = 20% de lucro desejado
+  desiredProfitPercent Decimal        @map("desired_profit_percent") @db.Decimal(5, 4)
+  /// Calculado: ticket * margin_percent
+  breakEvenCpa         Decimal?       @map("break_even_cpa") @db.Decimal(12, 2)
+  /// Calculado: ticket * (margin_percent - desired_profit_percent)
+  idealCpa             Decimal?       @map("ideal_cpa") @db.Decimal(12, 2)
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  campaigns     Campaign[]
+  leadEconomics LeadEconomics?
+
+  @@map("product_economics")
+}
+
+/// Parâmetros econômicos específicos para campanhas de LEADS.
+/// Derivados de ProductEconomics — persistidos para consultas rápidas.
+model LeadEconomics {
+  id             String           @id @default(cuid())
+  productId      String           @unique @map("product_id")
+  /// Ex: 0.10 = 10% dos leads viram venda
+  leadToSaleRate Decimal          @map("lead_to_sale_rate") @db.Decimal(5, 4)
+  /// Calculado: ideal_cpa * lead_to_sale_rate
+  idealCpl       Decimal?         @map("ideal_cpl") @db.Decimal(12, 2)
+  /// Calculado: break_even_cpa * lead_to_sale_rate
+  breakEvenCpl   Decimal?         @map("break_even_cpl") @db.Decimal(12, 2)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  product ProductEconomics @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("lead_economics")
+}
+
+// ─────────────────────────────────────────
+// CAMPANHAS
+// ─────────────────────────────────────────
+
+model Campaign {
+  id            String         @id @default(cuid())
+  name          String
+  platform      Platform
+  objectiveType ObjectiveType  @map("objective_type")
+  productId     String?        @map("product_id")
+  status        CampaignStatus @default(ACTIVE)
+  startDate     DateTime       @map("start_date") @db.Date
+  endDate       DateTime?      @map("end_date") @db.Date
+  /// ID da campanha na plataforma externa (Meta/Google) — usado para reconciliar no sync
+  externalId    String?        @map("external_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  product      ProductEconomics? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  targets      CampaignTarget?
+  dailyMetrics DailyMetric[]
+
+  @@index([platform])
+  @@index([status])
+  @@index([objectiveType])
+  @@index([externalId])
+  @@map("campaigns")
+}
+
+/// Metas manuais da campanha — separadas dos dados de API intencionalmente.
+/// Permite comparar planned vs real sem misturar fontes.
+model CampaignTarget {
+  id                   String   @id @default(cuid())
+  campaignId           String   @unique @map("campaign_id")
+  monthlyBudgetPlanned Decimal  @map("monthly_budget_planned") @db.Decimal(12, 2)
+  /// Só obrigatório para campanhas LEADS
+  cplTarget            Decimal? @map("cpl_target") @db.Decimal(12, 2)
+  /// Só obrigatório para campanhas SALES
+  cpaTarget            Decimal? @map("cpa_target") @db.Decimal(12, 2)
+  expectedLeads        Int?     @map("expected_leads")
+  expectedSales        Int?     @map("expected_sales")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("campaign_targets")
+}
+
+// ─────────────────────────────────────────
+// MÉTRICAS DIÁRIAS
+// Imutável após gravação — histórico preservado.
+// O sync usa upsert pelo unique [date, campaignId].
+// ─────────────────────────────────────────
+
+model DailyMetric {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  campaignId String   @map("campaign_id")
+  platform   Platform
+
+  // Métricas brutas vindas da API
+  impressions Int     @default(0)
+  clicks      Int     @default(0)
+  cost        Decimal @default(0) @db.Decimal(12, 2)
+  leads       Int     @default(0)
+  sales       Int     @default(0)
+  revenue     Decimal @default(0) @db.Decimal(12, 2)
+
+  // Métricas calculadas — gravadas junto para performance de queries de listagem
+  ctr            Decimal? @db.Decimal(8, 6)
+  cplReal        Decimal? @map("cpl_real") @db.Decimal(12, 2)
+  cpaReal        Decimal? @map("cpa_real") @db.Decimal(12, 2)
+  roas           Decimal? @db.Decimal(8, 4)
+  conversionRate Decimal? @map("conversion_rate") @db.Decimal(8, 6)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  /// Uma entrada por campanha por dia — base do upsert do sync
+  @@unique([date, campaignId])
+  @@index([campaignId])
+  @@index([date])
+  @@map("daily_metrics")
+}
+
+// ─────────────────────────────────────────
+// INTEGRAÇÕES E LOGS
+// ─────────────────────────────────────────
+
+model Integration {
+  id        String            @id @default(cuid())
+  /// Uma linha por plataforma
+  platform  Platform          @unique
+  status    IntegrationStatus @default(PENDING)
+  lastSync  DateTime?         @map("last_sync")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@map("integrations")
+}
+
+/// Log imutável de cada execução de sync — nunca deletar, apenas inserir.
+model SyncLog {
+  id        String     @id @default(cuid())
+  platform  Platform
+  status    SyncStatus
+  message   String?
+  /// Quantos registros foram processados nessa execução
+  records   Int?
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@index([platform])
+  @@index([createdAt])
+  @@map("sync_logs")
+}

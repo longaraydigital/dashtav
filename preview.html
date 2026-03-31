@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DASH TAV — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0B0F1A;
+    --card:       #111827;
+    --secondary:  #1F2937;
+    --border:     #1e293b;
+    --fg:         #f1f5f9;
+    --muted:      #64748b;
+    --primary:    #3B82F6;
+    --purple:     #8B5CF6;
+    --green:      #22C55E;
+    --green-bg:   #052e16;
+    --yellow:     #F59E0B;
+    --yellow-bg:  #1c1202;
+    --red:        #EF4444;
+    --red-bg:     #1c0202;
+    --sidebar-w:  240px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    display: flex;
+    font-size: 16px;
+  }
+
+  /* ── SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: #070b14;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    height: 64px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .logo-text {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--secondary); color: #fff; }
+  .nav-item.active {
+    background: rgba(59,130,246,0.12);
+    color: #fff;
+  }
+  .nav-item.active .nav-icon { color: var(--primary); }
+  .nav-dot {
+    margin-left: auto;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 2s infinite;
+  }
+  .nav-icon { font-size: 15px; width: 16px; text-align: center; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .sidebar-footer span { font-size: 11px; color: var(--muted); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  /* ── MAIN */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── HEADER */
+  .header {
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(17,24,39,0.6);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-title { font-size: 16px; font-weight: 700; }
+  .header-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .header-stats { display: flex; gap: 24px; }
+  .header-stat { text-align: right; }
+  .header-stat-label { font-size: 13px; color: var(--muted); }
+  .header-stat-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-ghost {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { color: var(--fg); background: var(--secondary); }
+
+  /* ── CONTENT */
+  .content { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── SECTION HEADER */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-title { font-size: 12px; font-weight: 600; }
+  .section-link { font-size: 12px; color: var(--primary); text-decoration: none; }
+  .section-link:hover { text-decoration: underline; }
+
+  /* ── KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s;
+  }
+  .kpi-card:hover {
+    border-color: rgba(59,130,246,0.3);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.1), 0 4px 20px rgba(59,130,246,0.06);
+  }
+  .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .kpi-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .kpi-icon.blue   { background: rgba(59,130,246,0.12); color: var(--primary); }
+  .kpi-icon.green  { background: var(--green-bg); color: var(--green); }
+  .kpi-icon.purple { background: rgba(139,92,246,0.12); color: var(--purple); }
+  .kpi-badge {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 600;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .kpi-badge.up   { background: var(--green-bg); color: var(--green); }
+  .kpi-badge.down { background: var(--red-bg); color: var(--red); }
+  .kpi-value { font-size: 26px; font-weight: 700; margin-top: 14px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .kpi-value.green  { color: var(--green); }
+  .kpi-value.purple { color: var(--purple); }
+  .kpi-label { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  /* ── CHARTS GRID */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+
+  /* Chart de linha — SVG inline */
+  .chart-svg { width: 100%; height: 160px; }
+
+  /* Pizza chart */
+  .pie-wrap { display: flex; align-items: center; gap: 24px; }
+  .pie-svg { width: 120px; height: 120px; flex-shrink: 0; }
+  .pie-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .pie-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .pie-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pie-name { color: var(--muted); }
+  .pie-val  { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── BARRA CHART SIMPLES */
+  .bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 120px; margin-top: 8px; }
+  .bar-group { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .bars { display: flex; gap: 4px; align-items: flex-end; height: 100px; }
+  .bar { width: 28px; border-radius: 4px 4px 0 0; transition: opacity 0.2s; }
+  .bar:hover { opacity: 0.8; }
+  .bar-label { font-size: 10px; color: var(--muted); text-align: center; }
+
+  /* ── TABLE */
+  .table-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  td { padding: 12px 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .td-name { font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  .td-muted { color: var(--muted); }
+  .td-green { color: var(--green); font-weight: 600; }
+  .td-red   { color: var(--red);   font-weight: 600; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge.green  { background: var(--green-bg); color: var(--green); }
+  .badge.yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .badge.red    { background: var(--red-bg);    color: var(--red); }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag.blue   { background: rgba(59,130,246,0.12); color: var(--primary); }
+  .tag.purple { background: rgba(139,92,246,0.12); color: var(--purple); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📈</div>
+    <span class="logo-text">Dash TAV</span>
+  </div>
+
+  <nav class="nav">
+    <a class="nav-item active" href="#">
+      <span class="nav-icon">▦</span> Dashboard
+      <span class="nav-dot"></span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📣</span> Campanhas
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">👥</span> Leads
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🛒</span> Vendas
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📦</span> Produtos
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🔌</span> Integrações
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⚙</span> Configurações
+    </a>
+  </nav>
+
+  <div class="sidebar-footer"><span>v0.1.0</span></div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="header-title">Dashboard</div>
+      <div class="header-sub">Visão geral de performance · Março 2025</div>
+    </div>
+    <div class="header-stats">
+      <div class="header-stat">
+        <div class="header-stat-label">Investimento</div>
+        <div class="header-stat-value">R$ 23.170</div>
+      </div>
+      <div class="header-stat">
+        <div class="header-stat-label">Faturamento</div>
+        <div class="header-stat-value" style="color:var(--green)">R$ 97.450</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-ghost">↻ Sincronizar</button>
+      <button class="btn-ghost">🔔</button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- KPIs -->
+    <section>
+      <div class="kpi-grid">
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon blue">💰</div>
+            <span class="kpi-badge up">▲ +12.4%</span>
+          </div>
+          <div class="kpi-value">R$ 23.170</div>
+          <div class="kpi-label">Investimento</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon green">📈</div>
+            <span class="kpi-badge up">▲ +28.7%</span>
+          </div>
+          <div class="kpi-value green">R$ 97.450</div>
+          <div class="kpi-label">Faturamento</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon green">💎</div>
+            <span class="kpi-badge up">▲ +18.2%</span>
+          </div>
+          <div class="kpi-value green">R$ 14.750</div>
+          <div class="kpi-label">Lucro</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon purple">📊</div>
+            <span class="kpi-badge up">▲ +14.3%</span>
+          </div>
+          <div class="kpi-value purple">4.21x</div>
+          <div class="kpi-label">ROAS</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon blue">🎯</div>
+            <span class="kpi-badge up" style="background:var(--green-bg);color:var(--green)">▼ -8.5%</span>
+          </div>
+          <div class="kpi-value">R$ 241</div>
+          <div class="kpi-label">CPA Médio</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon blue">👤</div>
+            <span class="kpi-badge up" style="background:var(--green-bg);color:var(--green)">▼ -12.1%</span>
+          </div>
+          <div class="kpi-value">R$ 8,75</div>
+          <div class="kpi-label">CPL Médio</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GRÁFICOS -->
+    <section class="charts-grid">
+
+      <!-- Linha: Custo vs Faturamento -->
+      <div class="chart-card">
+        <div class="chart-title">Custo vs Faturamento — últimos 14 dias</div>
+        <svg class="chart-svg" viewBox="0 0 600 160" preserveAspectRatio="none">
+          <!-- Grid lines -->
+          <line x1="0" y1="40" x2="600" y2="40" stroke="#1e293b" stroke-width="1"/>
+          <line x1="0" y1="80" x2="600" y2="80" stroke="#1e293b" stroke-width="1"/>
+          <line x1="0" y1="120" x2="600" y2="120" stroke="#1e293b" stroke-width="1"/>
+
+          <!-- Faturamento (verde) — área -->
+          <polygon
+            points="0,130 43,108 86,120 129,85 171,100 214,115 257,60 300,55 343,65 386,45 429,35 471,50 514,40 557,20 600,25 600,160 0,160"
+            fill="rgba(34,197,94,0.08)" stroke="none"/>
+          <!-- Faturamento linha -->
+          <polyline
+            points="0,130 43,108 86,120 129,85 171,100 214,115 257,60 300,55 343,65 386,45 429,35 471,50 514,40 557,20 600,25"
+            fill="none" stroke="#22C55E" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- Custo (azul) — área -->
+          <polygon
+            points="0,150 43,143 86,148 129,152 171,155 214,153 257,140 300,138 343,141 386,136 429,130 471,138 514,132 557,128 600,124 600,160 0,160"
+            fill="rgba(59,130,246,0.08)" stroke="none"/>
+          <!-- Custo linha -->
+          <polyline
+            points="0,150 43,143 86,148 129,152 171,155 214,153 257,140 300,138 343,141 386,136 429,130 471,138 514,132 557,128 600,124"
+            fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <!-- Legend -->
+        <div style="display:flex;gap:16px;margin-top:8px;">
+          <span style="font-size:11px;color:#22C55E;display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:2px;background:#22C55E;border-radius:1px"></span>Faturamento</span>
+          <span style="font-size:11px;color:#3B82F6;display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:2px;background:#3B82F6;border-radius:1px"></span>Custo</span>
+        </div>
+      </div>
+
+      <!-- Pizza: Distribuição por canal -->
+      <div class="chart-card">
+        <div class="chart-title">Distribuição por Canal</div>
+        <div class="pie-wrap">
+          <svg class="pie-svg" viewBox="0 0 120 120">
+            <!-- Donut: Meta 70%, Google 30% -->
+            <!-- Circulo base -->
+            <circle cx="60" cy="60" r="45" fill="none" stroke="#1e293b" stroke-width="20"/>
+            <!-- Meta (azul) -->
+            <circle cx="60" cy="60" r="45" fill="none" stroke="#3B82F6" stroke-width="20"
+              stroke-dasharray="197.9 282.7" stroke-dashoffset="70.7"
+              transform="rotate(-90 60 60)"/>
+            <!-- Google (roxo) -->
+            <circle cx="60" cy="60" r="45" fill="none" stroke="#8B5CF6" stroke-width="20"
+              stroke-dasharray="84.8 282.7" stroke-dashoffset="-127.2"
+              transform="rotate(-90 60 60)"/>
+            <text x="60" y="64" text-anchor="middle" font-size="11" font-weight="700" fill="#f1f5f9">70% Meta</text>
+          </svg>
+          <div class="pie-legend">
+            <div class="pie-item">
+              <span class="pie-dot" style="background:#3B82F6"></span>
+              <span class="pie-name">Meta</span>
+              <span class="pie-val" style="margin-left:auto">R$ 16.220</span>
+            </div>
+            <div class="pie-item">
+              <span class="pie-dot" style="background:#8B5CF6"></span>
+              <span class="pie-name">Google</span>
+              <span class="pie-val" style="margin-left:auto">R$ 6.950</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini barra CPA -->
+        <div style="margin-top:20px">
+          <div class="chart-title">CPA por Campanha</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>Meta Conv.</span><span style="color:#22C55E">R$ 200</span></div>
+              <div style="height:6px;background:var(--secondary);border-radius:3px"><div style="width:39%;height:100%;background:#22C55E;border-radius:3px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>Google Search</span><span style="color:#F59E0B">R$ 283</span></div>
+              <div style="height:6px;background:var(--secondary);border-radius:3px"><div style="width:55%;height:100%;background:#F59E0B;border-radius:3px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>Meta Frio</span><span style="color:#EF4444">R$ 511</span></div>
+              <div style="height:6px;background:var(--secondary);border-radius:3px"><div style="width:100%;height:100%;background:#EF4444;border-radius:3px"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABELA -->
+    <section>
+      <div class="section-header">
+        <span class="section-title">Campanhas Ativas</span>
+        <a class="section-link" href="#">Ver todas →</a>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Campanha</th><th>Plataforma</th><th>Objetivo</th>
+              <th>Custo</th><th>Leads</th><th>Vendas</th>
+              <th>CPA</th><th>CPL</th><th>ROAS</th>
+              <th>Lucro</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-name">Meta — Produto X — Conversão</td>
+              <td class="td-muted">Meta</td>
+              <td><span class="tag blue">Vendas</span></td>
+              <td>R$ 8.420</td>
+              <td class="td-muted">—</td>
+              <td>42</td>
+              <td>R$ 200</td>
+              <td class="td-muted">—</td>
+              <td>4.21x</td>
+              <td class="td-green">R$ 12.780</td>
+              <td><span class="badge green"><span class="badge-dot" style="background:var(--green)"></span>Escalar</span></td>
+            </tr>
+            <tr>
+              <td class="td-name">Google — Produto X — Search</td>
+              <td class="td-muted">Google</td>
+              <td><span class="tag blue">Vendas</span></td>
+              <td>R$ 5.100</td>
+              <td class="td-muted">—</td>
+              <td>18</td>
+              <td>R$ 283</td>
+              <td class="td-muted">—</td>
+              <td>2.94x</td>
+              <td class="td-green">R$ 1.900</td>
+              <td><span class="badge yellow"><span class="badge-dot" style="background:var(--yellow)"></span>Otimizar</span></td>
+            </tr>
+            <tr>
+              <td class="td-name">Meta — Captação de Leads — Ebook</td>
+              <td class="td-muted">Meta</td>
+              <td><span class="tag purple">Leads</span></td>
+              <td>R$ 3.200</td>
+              <td>640</td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td>R$ 5,00</td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge green"><span class="badge-dot" style="background:var(--green)"></span>Escalar</span></td>
+            </tr>
+            <tr>
+              <td class="td-name">Google — Display — Remarketing</td>
+              <td class="td-muted">Google</td>
+              <td><span class="tag purple">Leads</span></td>
+              <td>R$ 1.850</td>
+              <td>148</td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td>R$ 12,50</td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge yellow"><span class="badge-dot" style="background:var(--yellow)"></span>Otimizar</span></td>
+            </tr>
+            <tr>
+              <td class="td-name">Meta — Produto Y — Tráfego Frio</td>
+              <td class="td-muted">Meta</td>
+              <td><span class="tag blue">Vendas</span></td>
+              <td>R$ 4.600</td>
+              <td class="td-muted">—</td>
+              <td>9</td>
+              <td>R$ 511</td>
+              <td class="td-muted">—</td>
+              <td>1.37x</td>
+              <td class="td-red">-R$ 930</td>
+              <td><span class="badge red"><span class="badge-dot" style="background:var(--red)"></span>Pausar</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
