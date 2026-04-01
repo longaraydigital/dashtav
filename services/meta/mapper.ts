@@ -6,10 +6,15 @@ const SALE_ACTIONS = ["purchase", "offsite_conversion.fb_pixel_purchase", "omni_
 
 /**
  * Normaliza um insight diário da Meta para o formato interno do DASH TAV.
- * Separa leads de conversões de venda pelo tipo de action.
+ *
+ * - Leads:   contabilizados via LEAD_ACTIONS (action_type)
+ * - Vendas:  contabilizadas via SALE_ACTIONS (action_type)
+ * - Revenue: extraído de action_values para os SALE_ACTIONS
+ *            (Meta retorna o valor total de compra no campo action_values)
  */
 export function mapMetaInsight(insight: MetaInsight): NormalizedCampaignMetric {
-  const actions = insight.actions ?? []
+  const actions      = insight.actions      ?? []
+  const actionValues = insight.action_values ?? []
 
   const leads = actions
     .filter((a) => LEAD_ACTIONS.includes(a.action_type))
@@ -19,8 +24,10 @@ export function mapMetaInsight(insight: MetaInsight): NormalizedCampaignMetric {
     .filter((a) => SALE_ACTIONS.includes(a.action_type))
     .reduce((sum, a) => sum + Number(a.value), 0)
 
-  // Meta não retorna revenue diretamente — será enriquecido via checkout/CRM futuramente
-  const revenue = 0
+  // Revenue = soma dos valores de compra reportados pela Meta (Pixel de Purchase)
+  const revenue = actionValues
+    .filter((a) => SALE_ACTIONS.includes(a.action_type))
+    .reduce((sum, a) => sum + Number(a.value), 0)
 
   return {
     externalCampaignId: insight.campaign_id,

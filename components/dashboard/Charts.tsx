@@ -145,6 +145,73 @@ export function CampaignBarChart({ data }: { data: BarChartData[] }) {
 // GRÁFICO DE PIZZA — Distribuição por canal
 // ─────────────────────────────────────────
 
+// ─────────────────────────────────────────
+// GRÁFICO DE LINHA — Leads por dia
+// ─────────────────────────────────────────
+
+export interface LeadsLineData {
+  date: string
+  leads: number
+  custo: number
+}
+
+export function LeadsLineChart({ data }: { data: LeadsLineData[] }) {
+  return (
+    <div className="dash-card">
+      <h3 className="text-sm font-semibold text-foreground mb-4">
+        Leads e Custo por Dia
+      </h3>
+      <ResponsiveContainer width="100%" height={220}>
+        <LineChart data={data} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            yAxisId="left"
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }} />
+          <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="leads"
+            name="Leads"
+            stroke="hsl(var(--chart-2))"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="custo"
+            name="Custo"
+            stroke="hsl(var(--chart-1))"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 export interface PieChartData {
   name: string
   value: number

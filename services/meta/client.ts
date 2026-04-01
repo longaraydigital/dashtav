@@ -28,6 +28,7 @@ export interface MetaInsight {
   clicks: string
   spend: string
   actions?: Array<{ action_type: string; value: string }>
+  action_values?: Array<{ action_type: string; value: string }>
 }
 
 export class MetaAdsClient {
@@ -67,30 +68,51 @@ export class MetaAdsClient {
     return data.data
   }
 
-  /** Busca insights diários de um período */
+  /** Busca insights diários de um período (com paginação automática) */
   async getDailyInsights(dateFrom: string, dateTo: string): Promise<MetaInsight[]> {
-    const data = await this.fetch<{ data: MetaInsight[] }>(
+    const results: MetaInsight[] = []
+    let nextUrl: string | null = null
+
+    // Primeira página
+    const first = await this.fetch<{ data: MetaInsight[]; paging?: { next?: string } }>(
       `${this.adAccountId}/insights`,
       {
         level: "campaign",
-        fields: "campaign_id,campaign_name,impressions,clicks,spend,actions",
+        fields: "campaign_id,campaign_name,impressions,clicks,spend,actions,action_values",
         time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
         time_increment: "1",
         limit: "500",
       }
     )
-    return data.data
+    results.push(...first.data)
+    nextUrl = first.paging?.next ?? null
+
+    // Páginas seguintes
+    while (nextUrl) {
+      const res = await globalThis.fetch(nextUrl)
+      if (!res.ok) break
+      const page = await res.json() as { data: MetaInsight[]; paging?: { next?: string } }
+      results.push(...page.data)
+      nextUrl = page.paging?.next ?? null
+    }
+
+    return results
   }
 }
 
 /** Factory — lê credenciais do ambiente */
 export function createMetaClient(): MetaAdsClient {
   const accessToken = process.env.META_ACCESS_TOKEN
-  const adAccountId = process.env.META_AD_ACCOUNT_ID
+  const rawAdAccountId = process.env.META_AD_ACCOUNT_ID
 
-  if (!accessToken || !adAccountId) {
+  if (!accessToken || !rawAdAccountId) {
     throw new Error("Meta Ads: META_ACCESS_TOKEN e META_AD_ACCOUNT_ID são obrigatórios")
   }
+
+  // A Meta API exige o formato act_XXXXXXXXX
+  const adAccountId = rawAdAccountId.startsWith("act_")
+    ? rawAdAccountId
+    : `act_${rawAdAccountId}`
 
   return new MetaAdsClient({ accessToken, adAccountId })
 }

@@ -132,10 +132,10 @@ model Campaign {
   targets      CampaignTarget?
   dailyMetrics DailyMetric[]
 
+  @@unique([externalId, platform], name: "externalId_platform")
   @@index([platform])
   @@index([status])
   @@index([objectiveType])
-  @@index([externalId])
   @@map("campaigns")
 }
 
