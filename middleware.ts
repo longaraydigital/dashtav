@@ -13,10 +13,11 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - login (página de login)
      * - api/auth (NextAuth routes)
+     * - api/sync (Cron Job Vercel)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/((?!login|api/auth|api/sync|_next/static|_next/image|favicon.ico).*)",
   ],
 }
