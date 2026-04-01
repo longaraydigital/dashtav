@@ -17,11 +17,12 @@ const UpdateProductSchema = z.object({
 // PUT /api/products/[id]
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const existing = await prisma.productEconomics.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
     if (!existing) return notFound()
 
@@ -44,7 +45,7 @@ export async function PUT(
     )
 
     const product = await prisma.productEconomics.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(productName && { productName }),
         ticket,
@@ -81,15 +82,16 @@ export async function PUT(
 // DELETE /api/products/[id]
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const existing = await prisma.productEconomics.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
     if (!existing) return notFound()
 
-    await prisma.productEconomics.delete({ where: { id: params.id } })
+    await prisma.productEconomics.delete({ where: { id } })
     return ok({ deleted: true })
   } catch (e) {
     return serverError(e)
